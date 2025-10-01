@@ -1,5 +1,311 @@
 # Lab Guide Session 8
+# Lab Guide Session 8
 
+---
+
+## 🟣 **Session Homework — Complete All Session Tasks**
+
+> **All sections marked “*session task*” are now your homework!**  
+> To make these stand out, they are highlighted in **purple** below.  
+> **Complete every 🟣 Session Homework section as your assignment.**  
+> (Other checklist items remain as reference, but homework submission = all purple tasks below.)
+
+---
+
+# 🔹 Part 3/5 — Light Switch Button (toggle Spotlight) <span style="color:purple;font-weight:bold;">🟣 Session Homework</span>
+
+## ✅ Goal
+
+Click a world-space **Button** with the ray to **toggle a Spot Light**.
+
+### 1) Add the light
+
+* 🟣 **1.1** **Hierarchy:** Create → Light → **Spot Light** (name **`RoomSpot`**)
+
+  * **Inspector (Light):** uncheck **enabled** (start OFF), tune **Range/Angle/Intensity**.
+
+### 2) Add the script
+
+* 🟣 **2.1** **Project:** `Assets/Scripts/LightSwitchController.cs`
+
+```csharp
+using UnityEngine;
+
+public class LightSwitchController : MonoBehaviour
+{
+    public GameObject lightObject; // assign the Spot Light GameObject
+
+    public void ToggleLight()
+    {
+        if (lightObject) lightObject.SetActive(!lightObject.activeSelf);
+    }
+}
+```
+
+### 3) Wire in the Inspector
+
+* 🟣 **3.1** **Hierarchy:** Create Empty → **`SceneManager`** (root)
+
+  * **Inspector (SceneManager):** **Add Component → LightSwitchController**
+  * **LightSwitchController → Light Object**: drag **`RoomSpot`** (GameObject)
+* 🟣 **3.2** **Hierarchy:** `UI_Canvas/RaycastButton`
+
+  * **Inspector (Button):** **OnClick() → +** → drag **`SceneManager`** → choose **LightSwitchController.ToggleLight()**
+* 🟣 **3.3** **Parent/child change?** None.
+
+---
+
+# 🔹 Part 4/5 — Basketball Hoop Scoring (UI score increases on goal) <span style="color:purple;font-weight:bold;">🟣 Session Homework</span>
+
+## ✅ Goal
+
+Grab/throw a **basketball**; when it passes through the **hoop**, the **Score** UI increments.
+
+### 1) Backboard + rim (with child trigger)
+
+* 🟣 **1.1** **Hierarchy:** 3D Object → **Cube** (name **`Backboard`**)
+
+  * **Inspector (Transform):** **Scale (1,1.2,0.05)**, **Position (0,1.6,3)**
+* 🟣 **1.2** **Hierarchy:** 3D Object → **Torus** *(or thin Cylinder ring)* (name **`Rim`**)
+
+  * **Inspector (Transform):** **Position (0,1.4,2.8)**, radius ≈ **0.23–0.25**
+  * **Hierarchy:** drag **`Rim`** onto **`Backboard`** → **child** `Backboard/Rim`
+  * **Inspector (Rim):** **Add Component → MeshCollider** (Convex OFF, not a trigger)
+* 🟣 **1.3** **Hierarchy:** 3D Object → **Cylinder** (name **`ScoreTrigger`**)
+
+  * **Hierarchy:** drag under **`Backboard/Rim`** → **child** `Backboard/Rim/ScoreTrigger`
+  * **Inspector (Transform):** **Scale (~0.42, 0.05, 0.42)**; place **just below** rim plane
+  * **Inspector (Collider):** **Cylinder Collider**, **Is Trigger = ON**
+
+### 2) Basketball (grab + physics)
+
+* 🟣 **2.1** **Hierarchy:** 3D Object → **Sphere** (name **`Basketball`**)
+
+  * **Inspector (Transform):** **Scale (0.24,0.24,0.24)**
+* 🟣 **2.2** **Inspector (Basketball):**
+
+  * **Add Component → Rigidbody** (Mass **0.62**, Drag **0.05**, Angular Drag **0.05**)
+  * (Optional) Assign **Physic Material** (Bounciness ~**0.6**, Combine **Maximum**) to SphereCollider
+  * **Add Component → Grabbable** → drag **Basketball (Rigidbody)** into **Grabbable → Rigidbody**
+  * **Add Component → ColliderSurface** → drag **Basketball (SphereCollider)**
+  * **Add Component → GrabInteractable** *(or Hand Grab Interactable)*
+* 🟣 **2.3** **Tag setup**
+
+  * **Edit → Project Settings → Tags and Layers → Tags → + →** add **`Basketball`**
+  * **Inspector (Basketball → Tag):** set **Basketball**
+
+> **Wizard alternative:** Right-click `Basketball` → **Interaction SDK → Add Grab Interaction**
+> • **Creates a parent** (e.g., `ISDK Hand Grab Interaction`) → sphere becomes its **child**; most components live on parent.
+
+### 3) Score UI
+
+* 🟣 **3.1** **Hierarchy:** UI → **Canvas** (name **`ScoreCanvas`**)
+
+  * **Inspector (Canvas):** **World Space**, **Position (-0.9,1.8,2.2)**, **Scale (0.001,0.001,0.001)**
+* 🟣 **3.2** **Hierarchy:** `ScoreCanvas` → UI → **Text (TextMeshPro)** (name **`ScoreText`**)
+
+  * **Inspector (Text):** “Score: 0”
+
+### 4) Scripts
+
+* 🟣 **4.1** **Project:** `Assets/Scripts/ScoreManager.cs`
+
+```csharp
+using UnityEngine;
+using TMPro;
+
+public class ScoreManager : MonoBehaviour
+{
+    public TMP_Text scoreText;
+    public int pointsPerGoal = 1;
+    private int _score;
+
+    void Start() => UpdateUI();
+
+    public void AddScore(int amount)
+    {
+        _score += amount;
+        UpdateUI();
+    }
+
+    public void ResetScore()
+    {
+        _score = 0;
+        UpdateUI();
+    }
+
+    private void UpdateUI()
+    {
+        if (scoreText) scoreText.text = $"Score: {_score}";
+    }
+}
+```
+
+* 🟣 **4.2** **Project:** `Assets/Scripts/HoopTrigger.cs`
+
+```csharp
+using UnityEngine;
+
+[RequireComponent(typeof(Collider))]
+public class HoopTrigger : MonoBehaviour
+{
+    public ScoreManager scoreManager;
+    public string ballTag = "Basketball";
+
+    private void Reset()
+    {
+        var c = GetComponent<Collider>();
+        if (c) c.isTrigger = true;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag(ballTag) && scoreManager)
+            scoreManager.AddScore(scoreManager.pointsPerGoal);
+    }
+}
+```
+
+### 5) Wiring (Inspector targets)
+
+* 🟣 **5.1** **Hierarchy:** **`SceneManager`** → **Inspector:** **Add Component → ScoreManager**
+
+  * **ScoreManager → Score Text**: drag **`ScoreCanvas/ScoreText`**
+* 🟣 **5.2** **Hierarchy:** `Backboard/Rim/ScoreTrigger` → **Inspector:** **Add Component → HoopTrigger**
+
+  * **HoopTrigger → Score Manager**: drag **`SceneManager`**
+
+---
+
+# 🔹 Part 5/5 — Playtest, (Optional) Masking, Build & Troubleshooting <span style="color:purple;font-weight:bold;">🟣 Session Homework</span>
+
+## 🟣 **A) Playtest**
+
+* 🟣 **A.1** Enter **Play** with Quest Link/AirLink. Rays appear only on valid targets (Hide When No Interactable = ON).
+* 🟣 **A.2** Click **`UI_Canvas/RaycastButton`** → `RoomSpot` toggles.
+* 🟣 **A.3** Throw **Basketball** through **`Backboard/Rim/ScoreTrigger`** → **Score** increments.
+
+## 🟣 **B) (Optional) Masking: Left = 3D only, Right = UI only**
+
+* 🟣 **B.1** **LeftController** (object under **OVRController**): **Add Component → Tag Set Filter**
+
+  * **Required Tag = 3DObject**, **Exclude Tag = UICanvas**
+* 🟣 **B.2** **3D interactable host** (manual=`RayObject`; wizard=its **parent**): **Add Component → Tag Set → Tag = 3DObject**
+* 🟣 **B.3** **RightController**: **Add Component → Tag Set Filter**
+
+  * **Required Tag = UICanvas**, **Exclude Tag = 3DObject**
+* 🟣 **B.4** **Canvas interactable host** (manual=`UI_Canvas`; wizard=its helper): **Add Component → Tag Set → Tag = UICanvas**
+* 🟣 **B.5** **Reference filters inside each RayInteractor**
+
+  * **LeftController/ControllerInteractors/Controller Ray Interactor → Inspector → Interactable Filters → +** → drag **LeftController (Tag Set Filter)**
+  * **RightController/ControllerInteractors/Controller Ray Interactor → …** → drag **RightController (Tag Set Filter)**
+
+## 🟣 **C) Troubleshooting**
+
+* 🟣 **No ray** → Check Ray Interactor component, line visual, and that you’re pointing at interactables.
+* 🟣 **UI not clickable** → Canvas **World Space**, `EventSystem` has **Pointable Canvas Module**, `UI_Canvas` has **Tracked Device Graphic Raycaster**, scale ~0.001.
+* 🟣 **3D not reacting** → On the **host**: **RayInteractable**, **Grabbable**, **ColliderSurface**, **MovementProvider** set and assigned in **RayInteractable**.
+* 🟣 **Light button** → Button.OnClick → **SceneManager → LightSwitchController.ToggleLight()**; script has **RoomSpot** assigned.
+* 🟣 **No score** → `ScoreTrigger` **Is Trigger = ON**, **HoopTrigger.ScoreManager** set, ball **Tag = Basketball**, trigger slightly **below** rim.
+
+## 🟣 **D) Build for Quest**
+
+* 🟣 **D.1** Build Settings → **Android**
+* 🟣 **D.2** **Development Build** (first tests)
+* 🟣 **D.3** **Build & Run** to headset
+
+---
+
+# 🔹 Part 6/6 — Controller Selection Masks (Tag Set Filter: Left = 3D only, Right = UI only) <span style="color:purple;font-weight:bold;">🟣 Session Homework</span>
+
+> **Goal:** Make the **Left Controller** ray **select only 3D objects** and **ignore UI**; make the **Right Controller** ray **select only UI (Canvas)** and **ignore 3D**—exactly as shown in the video.  
+> — **This is required homework.**
+
+## 🟣 **1) Add the Tag Set Filter to each controller**
+
+* 🟣 **1.1 — Left Controller (filter for 3D only)**
+
+  * **Hierarchy Path:** `OVRCameraRig/OVRInteraction/OVRController/LeftController`
+  * **Inspector (LeftController):** **Add Component → Tag Set Filter**
+
+    * **Required Tag =** `3DObject`
+    * **Exclude Tag =** `UICanvas`
+  * **Parent/child change?** None; you added a component to **LeftController**.
+
+* 🟣 **1.2 — Right Controller (filter for UI only)**
+
+  * **Hierarchy Path:** `OVRCameraRig/OVRInteraction/OVRController/RightController`
+  * **Inspector (RightController):** **Add Component → Tag Set Filter**
+
+    * **Required Tag =** `UICanvas`
+    * **Exclude Tag =** `3DObject`
+  * **Parent/child change?** None; you added a component to **RightController**.
+
+---
+
+## 🟣 **2) Tag each interactable host (the objects your rays should hit)**
+
+* 🟣 **2.1 — 3D Object host (for the cube)**
+
+  * **Hierarchy Path (wizard):** `ISDK Ray Grab Interaction` (the **parent** created by the wizard)
+  * **Hierarchy Path (manual):** your **`RayObject`** cube (same GO that has **RayInteractable**)
+  * **Inspector (host GO):** **Add Component → Tag Set**
+
+    * **Tag =** `3DObject`
+  * **Parent/child:** unchanged—component added to the **host**.
+
+* 🟣 **2.2 — UI Canvas host (for the world-space UI)**
+
+  * **Hierarchy Path (manual UI):** `UI_Canvas` (the Canvas itself)
+  * **Hierarchy Path (wizard UI):** the **Canvas helper** created by “Add Ray Interaction to Canvas” (if present; tag that helper or the Canvas—either works as long as the **RayInteractable** is present)
+  * **Inspector (host GO):** **Add Component → Tag Set**
+
+    * **Tag =** `UICanvas`
+  * **Parent/child:** unchanged—component added to the **host**.
+
+---
+
+## 🟣 **3) Tell each Controller Ray Interactor which Filter to use**
+
+* 🟣 **3.1 — Left Ray Interactor uses the LeftController’s filter**
+
+  * **Hierarchy Path:** `OVRCameraRig/OVRInteraction/OVRController/LeftController/ControllerInteractors/Controller Ray Interactor`
+  * **Inspector (Controller Ray Interactor):** find **Optionals → Interactable Filters (list)**
+
+    * Click **+**, then **drag `LeftController`** (the object that holds the **Tag Set Filter**) **into the new slot**.
+  * **Parent/child:** unchanged—just filling a list field on the interactor.
+
+* 🟣 **3.2 — Right Ray Interactor uses the RightController’s filter**
+
+  * **Hierarchy Path:** `OVRCameraRig/OVRInteraction/OVRController/RightController/ControllerInteractors/Controller Ray Interactor`
+  * **Inspector (Controller Ray Interactor):** **Optionals → Interactable Filters → +**
+
+    * **Drag `RightController`** (the object with the **Tag Set Filter**) **into the slot**.
+  * **Parent/child:** unchanged—just filling a list field on the interactor.
+
+---
+
+## 🟣 **4) Quick playtest (what you should see)**
+
+* 🟣 **Left Controller** ray **selects the cube** (tagged `3DObject`) and **passes through the UI** (tagged `UICanvas`).
+* 🟣 **Right Controller** ray **selects the UI Canvas** and **ignores the cube**.
+* 🟣 **If it doesn’t work:** see troubleshooting below—most issues are a missed **reference** (Step 3) or a **tag typo** (Step 2).
+
+---
+
+## 🟣 **Troubleshooting (exact spots to check)**
+
+* 🟣 **Left ray still hits UI** → On **LeftController**, verify **Tag Set Filter** is **Required=3DObject**, **Exclude=UICanvas**. On the **Left Controller Ray Interactor**, confirm the **Interactable Filters** list includes the filter reference.
+* 🟣 **Right ray still hits 3D** → On **RightController**, verify **Required=UICanvas**, **Exclude=3DObject**; on the **Right Controller Ray Interactor**, the **Interactable Filters** list includes the filter reference.
+* 🟣 **Nothing is selectable** → Ensure the **interactable hosts** actually have **Tag Set** with **matching strings** (`3DObject` on the cube’s host; `UICanvas` on the Canvas host).
+* 🟣 **Wizard confusion** → If you used the **Ray Grab wizard** on the cube, remember the **host** is the **wizard parent** (`ISDK Ray Grab Interaction`), not the mesh child. Put **Tag Set** on that parent.
+
+---
+
+> 🟣 **Homework Submission:**  
+> Submit screenshots and/or video of ALL purple-highlighted steps above, demonstrating working ray UI, light toggle, basketball scoring, controller selection masks, and troubleshooting if needed.
+
+---
 
 # 🔹 Part 1/5 — Project Setup (Unity 6.2 • URP • Meta XR AIO SDK v65+ • Quest 2/3)
 
