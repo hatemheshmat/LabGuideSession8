@@ -385,7 +385,7 @@ public class RayMovementProviderSelector : MonoBehaviour
 
 
 
-# 🔹 Part 3/5 — Light Switch Button (toggle Spotlight)
+# 🔹 Part 3/5 — Light Switch Button (toggle Spotlight) *session task cube trigger and UI button*
 
 ## ✅ Goal
 
@@ -550,7 +550,7 @@ public class HoopTrigger : MonoBehaviour
 
 ---
 
-# 🔹 Part 5/5 — Playtest, (Optional) Masking, Build & Troubleshooting
+# 🔹 Part 5/5 — Playtest, (Optional) Masking, Build & Troubleshooting  *Session task*
 
 ## A) Playtest
 
@@ -604,7 +604,7 @@ public class HoopTrigger : MonoBehaviour
 
 ---
 
-# 🔹 Part 6/6 — Controller Selection Masks (Tag Set Filter: Left = 3D only, Right = UI only)
+# 🔹 Part 6/6 — Controller Selection Masks (Tag Set Filter: Left = 3D only, Right = UI only) *Session Task*
 
 > **Goal:** Make the **Left Controller** ray **select only 3D objects** and **ignore UI**; make the **Right Controller** ray **select only UI (Canvas)** and **ignore 3D**—exactly as shown in the video.
 
