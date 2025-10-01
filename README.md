@@ -1,4 +1,4 @@
-# LabGuideSession8
+# Lab Guide Session 8
 
 🔹 Part 1/5 — Project Setup (Unity 6.2 • URP • Meta XR AIO SDK v65+ • Quest 2/3)
 ✅ To-Do Checklist (with why)
